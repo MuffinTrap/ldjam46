@@ -478,6 +478,7 @@ function neseditor.draw(data, font_height)
       end
 
       -- Draw guides for selected image or sprite
+      drawing.setColor(6)
       local imagew = 0
       local imageh = 0
       if valid_image then

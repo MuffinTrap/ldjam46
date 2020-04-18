@@ -69,30 +69,166 @@ local function room_contains_sprite(data, character)
   return false
 end
 
-local function restrict(px, py, w, h, room_size)
-  if px + w > room_size.w then
-    px = room_size.w - w
-  elseif px < 0 then
+local function restrict(bounds, room_size)
+  local px = bounds.x
+  local py = bounds.y
+  if bounds.r >= room_size.w then
+    px = room_size.w - bounds.w
+  elseif bounds.x <= 0 then
     px = 0
-  elseif py + h > room_size.h then
-    py = room_size.h - h
-  elseif py  < 0 then
+  end
+
+  if bounds.b >= room_size.h then
+    py = room_size.h - bounds.h
+  elseif bounds.y <= 0 then
     py = 0
   end
+
   return px, py
 end
 
-local function travel(px, py, w, h, room_size)
-  if px > room_size.w then
-    px = px - room_size.w
-  elseif px + w < 0 then
-    px = room_size.w - w
-  elseif py > room_size.h then
-    py = py - room_size.h
-  elseif py + h < 0 then
-    py = room_size.h - h
+local function travel(bounds, room_size)
+  local px = bounds.x
+  local py = bounds.y
+  if bounds.x > room_size.w then
+    px = bounds.x - room_size.w
+  elseif bounds.r < 0 then
+    px = room_size.w - bounds.w
   end
+
+  if bounds.y > room_size.h then
+    py = bounds.y - room_size.h
+  elseif bounds.b < 0 then
+    py = room_size.h - bounds.h
+  end
+
   return px, py
+end
+
+local function get_player_bounds(player, x, y)
+  local px = x
+  local py = y
+  local pw = player.frame_width
+  local ph = player.frame_height
+  local pr = px + pw
+  local pb = py + ph
+
+  local bounds = {x = px, y = py, w = pw, h = ph, r = pr, b = pb}
+  return bounds
+end
+
+local function update_room_change(data, input, bounds)
+  -- Check walking over room border
+  local room_size = get_room_pixel_size(1)
+  local current_coordinates = get_room_coordinates(data, data.active_room)
+  local next_coordinates = {x = current_coordinates.x , y = current_coordinates.y}
+
+
+  -- Start looking if should restrict or travel
+  local change_x = 0
+  local change_y = 0
+  if bounds.r > room_size.w then
+    change_x = 1
+  elseif bounds.x < 0 then
+    change_x = -1
+  end
+
+  if bounds.b > room_size.h then
+    change_y = 1
+  elseif bounds.y < 0 then
+    change_y = -1
+  end
+
+  local result_x = bounds.x
+  local result_y = bounds.y
+
+  if change_x ~= 0 or change_y ~= 0 then
+    -- Check if there is room in the direction
+    local nextroom = get_room_at(data, current_coordinates.x + change_x, current_coordinates.y + change_y)
+
+    if nextroom then
+      local travel_x , travel_y = travel(bounds, room_size)
+      -- travel function changed coordinates, can change room
+      if travel_x ~= bounds.x
+      or travel_y ~= bounds.y then
+        result_x = travel_x
+        result_y = travel_y
+        data.active_room = nextroom
+      end
+    else
+      -- There is no room, restrict movement
+      result_x, result_y = restrict(bounds, room_size)
+    end
+  end
+
+  return result_x, result_y
+end
+
+local function print_bounds(b)
+  print("x " .. b.x .. ", " .. b.y ..", " .. b.r .. ", " .. b.b)
+
+end
+
+local function test_collision(bounds_a, bounds_b)
+  local result = {collision = false, x = 0, y = 0}
+  if bounds_a.x <= bounds_b.x then
+    result.x = math.min(bounds_b.x - bounds_a.r, 0)
+  else
+    result.x = math.max(bounds_b.r - bounds_a.x, 0)
+  end
+  if bounds_a.y < bounds_b.y then
+    result.y = math.min(bounds_b.y - bounds_a.b, 0)
+  else
+    result.y = math.max(bounds_b.b - bounds_a.y, 0)
+  end
+  result.collision = (result.x ~= 0 and result.y ~= 0)
+  -- Return only the smaller correction
+  if math.abs(result.x) < math.abs(result.y) then
+    result.y = 0
+  else
+    result.x = 0
+  end
+  return result
+end
+
+local function update_collision_check(data, input, bounds)
+
+  local firstFloorId = 9
+  local firstLadderId = 4
+  local lastLadderId = 6
+  local goldId = 7
+
+  local grid_size = 16
+
+  local bounds_b = {x = 0, y = 0, r = 0, b = 0}
+
+  local result_x = bounds.x
+  local result_y = bounds.y
+
+  for i, sprite in ipairs(data.rooms[data.active_room].fg) do
+    if sprite.index >= firstFloorId then
+      bounds_b.x = sprite.x * TILE_SIZE
+      bounds_b.y = sprite.y * TILE_SIZE
+      bounds_b.r = bounds_b.x + grid_size
+      bounds_b.b = bounds_b.y + grid_size
+      local collision_result = test_collision(bounds, bounds_b)
+      if collision_result.collision == true then
+        print_bounds(bounds)
+        print_bounds(bounds_b)
+        result_x = result_x + collision_result.x
+        result_y = result_y + collision_result.y
+      end
+    end
+  end
+  -- Collision with floor?
+  -- No floor underneath -> Change to falling state
+
+  -- Collision with gold -> Change to gold pick state
+
+  -- Collision with ladder -> Can move up and down?
+
+  return result_x, result_y
+
 end
 
 local function update_walk(data, input)
@@ -101,6 +237,10 @@ local function update_walk(data, input)
   if not player then
     return
   end
+
+
+  local test_x = walkstate.player_x
+  local test_y = walkstate.player_y
 
   if direction_down(input) then
     local step_x = 0
@@ -119,59 +259,18 @@ local function update_walk(data, input)
       drawing.set_animation(player, "walk_right")
     end
 
-    walkstate.player_x = walkstate.player_x + step_x
-    walkstate.player_y = walkstate.player_y + step_y
+    test_x = walkstate.player_x + step_x
+    test_y = walkstate.player_y + step_y
   else
     deaccelerate(walkstate)
     player.active_animation = "idle"
   end
 
-  -- Check walking over room border
-  local room_size = get_room_pixel_size(1)
-  local current_coordinates = get_room_coordinates(data, data.active_room)
-  local next_coordinates = {x = current_coordinates.x , y = current_coordinates.y}
-
-  local x = walkstate.player_x
-  local y = walkstate.player_y
-  local w = player.frame_width
-  local h = player.frame_height
-
-  -- Start looking if should restrict or travel
-  if x + w > room_size.w then
-    next_coordinates.x = current_coordinates.x + 1
-    next_coordinates.y = current_coordinates.y
-  elseif x < 0 then
-    next_coordinates.x = current_coordinates.x - 1
-    next_coordinates.y = current_coordinates.y
-  elseif y + h > room_size.h then
-    next_coordinates.x = current_coordinates.x
-    next_coordinates.y = current_coordinates.y + 1
-  elseif y < 0 then
-    next_coordinates.x = current_coordinates.x
-    next_coordinates.y = current_coordinates.y - 1
-  end
-
-  if next_coordinates.x ~= current_coordinates.x
-  or next_coordinates.y ~= current_coordinates.y then
-
-    -- Check if there is room in the direction
-
-    local nextroom = get_room_at(data, next_coordinates.x, next_coordinates.y)
-
-    if nextroom then
-      local travel_x , travel_y = travel(x,y, w, h, room_size)
-      -- travel function changed coordinates, can change room
-      if travel_x ~= x
-      or travel_y ~= y then
-        walkstate.player_x = travel_x
-        walkstate.player_y = travel_y
-        data.active_room = nextroom
-      end
-    else
-      -- There is no room, restrict movement
-      walkstate.player_x, walkstate.player_y = restrict(x, y, w, h, room_size)
-    end
-  end
+  local bounds = get_player_bounds(player, test_x, test_y)
+  local result_x, result_y = update_collision_check(data, input, bounds)
+  walkstate.player_x = result_x
+  walkstate.player_y = result_y
+  -- walkstate.player_x, walkstate.player_y = update_room_change(data, input, bounds)
 end
 
 local debugWin = false
