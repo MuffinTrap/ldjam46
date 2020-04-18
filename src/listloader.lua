@@ -75,12 +75,7 @@ function listloader.load_image_list()
   return images
 end
 
-local function load_sprite(filename)
-  --[[
-    bunny.png 8 16
-    idle 1 2 1000, ...
-  ]]--
-
+local function create_sprite()
   local sprite = {
     sprite_atlas = nil,
     frame_width = 8,
@@ -90,6 +85,29 @@ local function load_sprite(filename)
     last_update = 0,
     animations = {},
   }
+  return sprite
+end
+
+local function load_sprite_image(filename)
+  local sprite = create_sprite()
+  if love.filesystem.getInfo(filename) then
+      sprite.sprite_atlas = love.graphics.newImage(filename)
+      sprite.frame_width = sprite.sprite_atlas:getWidth()
+      sprite.frame_height = sprite.sprite_atlas:getHeight()
+      print("Frame size: " .. sprite.frame_width .. ", " .. sprite.frame_height)
+  else
+    print("Could not find sprite image:" .. filename)
+  end
+  return sprite
+end
+
+local function load_sprite(filename)
+  --[[
+    bunny.png 8 16
+    idle 1 2 1000, ...
+  ]]--
+
+  local sprite = create_sprite()
 
   local spritefilename = nil
 
@@ -160,7 +178,6 @@ function listloader.load_sprite_list()
   local separator = " "
   if love.filesystem.getInfo(filename) then
 
-    --># image.png # # # #
     local linenumber = 0
     for line in love.filesystem.lines(filename) do
       print ("Sprite list line: " .. linenumber)
@@ -169,8 +186,15 @@ function listloader.load_sprite_list()
       if (#parts == 2) then
         local index = tonumber(parts[1])
         local spritefilename = parts[2]
-        local spritepath = "data/sprites/" .. spritefilename
-        sprites[index] = load_sprite(spritepath)
+        -- If filename is .png, then just load the image and no animations etc
+        print ("Sprite filename" .. spritefilename)
+        if spritefilename:find(".png", -5) then
+          local spritepath = "data/images/" .. spritefilename
+          sprites[index] = load_sprite_image(spritepath)
+        else
+          local spritepath = "data/sprites/" .. spritefilename
+          sprites[index] = load_sprite(spritepath)
+        end
       end
     end
 

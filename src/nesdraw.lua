@@ -6,18 +6,19 @@ local function create_color(r, g, b)
   return {r/255, g/255, b/255}
 end
 
-local c0 = create_color(248, 200, 104)
-local c1 = create_color(141, 219, 52)
-local c2 = create_color(105, 207, 239)
-local c3 = create_color(209, 179, 255)
-local c4 = create_color(255, 142, 101)
-local c5 = {255/255, 241/255, 232/255}
+local c1 = create_color(248, 200, 104)
+local c2 = create_color(141, 219, 52)
+local c3 = create_color(105, 207, 239)
+local c4 = create_color(209, 179, 255)
+local c5 = create_color(255, 142, 101)
+local c6 = {255/255, 241/255, 232/255}
+local c7 = create_color(100, 100, 100)
 
 local bg1 = create_color(87, 67, 104)
 local bg2 = create_color(132, 136, 211)
 local bg3 = create_color(204, 86, 174)
 
-local colors = {c0, c1, c2, c3, c4, c5}
+local colors = {c1, c2, c3, c4, c5, c6, c7}
 
 local nesdraw = {
 

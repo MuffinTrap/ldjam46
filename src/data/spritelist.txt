@@ -1,0 +1,9 @@
+1 player.txt
+2 snake.png
+3 food.png
+4 tile_ladder_top.png
+5 tile_ladder_middle.png
+6 tile_ladder_bottom.png
+7 tile_chest_gold.png
+8 tile_chest_empty.png
+9 tile_brown_moss_center.png
