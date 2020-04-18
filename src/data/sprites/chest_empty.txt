@@ -1,0 +1,1 @@
+tile_chest_empty.png 16 16

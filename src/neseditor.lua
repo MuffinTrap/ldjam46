@@ -459,26 +459,52 @@ function neseditor.draw(data, font_height)
         grid = room.triggers
       end
 
-      -- Draw borders
+      -- Draw borders of room
       love.graphics.rectangle("line", st[1]-1, st[2]-1, room_tile_size.w + 2, room_tile_size.h + 2)
-      modify_grid(grid, selected_item, mt)
 
-      -- Draw guides
+      -- Draw guides for 16x16 tiles
+      drawing.setColor(7)
+      local guide_size = 16 * room_scale
+      local guides_x = room_size.w / guide_size
+      local guides_y = room_size.h / guide_size
+      for guide_x = 0, guides_x do
+        love.graphics.line(room_pos.x + guide_x * guide_size, room_pos.y
+                           , room_pos.x + guide_x * guide_size, room_pos.y + room_size.h)
+      end
+
+      for guide_y = 0, guides_y do
+        love.graphics.line(room_pos.x, room_pos.y + guide_y * guide_size
+                           , room_pos.x + room_size.w, room_pos.y + guide_y * guide_size)
+      end
+
+      -- Draw guides for selected image or sprite
+      local imagew = 0
+      local imageh = 0
       if valid_image then
-        local imagew = data.images[neseditor.selected_image]:getWidth() * room_scale
-        local imageh = data.images[neseditor.selected_image]:getHeight() * room_scale
+        imagew = data.images[neseditor.selected_image]:getWidth() * room_scale
+        imageh = data.images[neseditor.selected_image]:getHeight() * room_scale
+      elseif valid_sprite then
+        imagew = data.sprites[neseditor.selected_sprite].frame_width * room_scale
+        imageh = data.sprites[neseditor.selected_sprite].frame_height * room_scale
+      end
+
+      if valid_sprite or valid_image then
         love.graphics.line(room_pos.x, st[2],
-                          room_pos.x + room_size.w, st[2])
+                           room_pos.x + room_size.w, st[2])
         love.graphics.line(room_pos.x, st[2] + imageh,
-                          room_pos.x + room_size.w, st[2] + imageh)
+                           room_pos.x + room_size.w, st[2] + imageh)
 
         love.graphics.line(st[1], room_pos.y
-                          , st[1], room_pos.y + room_size.h)
+                           , st[1], room_pos.y + room_size.h)
 
         love.graphics.line(st[1] + imagew, room_pos.y
-                          , st[1] + imagew, room_pos.y + room_size.h)
+                           , st[1] + imagew, room_pos.y + room_size.h)
       end
+
+      -- Finally modify the room
+      modify_grid(grid, selected_item, mt)
     end
+
 
     -- Edit World
 
