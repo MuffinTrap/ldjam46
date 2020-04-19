@@ -80,16 +80,6 @@ function nesdraw.draw_world(data, world_index, x, y, scale)
   end
 end
 
-local function draw_sprite_frame(sprite, x, y, u, v, scale)
-  local frame = love.graphics.newQuad(u, v
-                                      , sprite.frame_width, sprite.frame_height
-                                      , sprite.sprite_atlas:getWidth()
-                                      , sprite.sprite_atlas:getHeight())
-
-  local transform = love.math.newTransform(x, y, 0, scale, scale)
-  love.graphics.draw(sprite.sprite_atlas, frame, transform)
-
-end
 
 function nesdraw.set_animation(sprite, animation)
   for a, anim in ipairs(sprite.animations) do
@@ -99,6 +89,22 @@ function nesdraw.set_animation(sprite, animation)
       break
     end
   end
+end
+
+local function draw_sprite_frame(sprite, x, y, u, v, scale, mirror_x)
+  local frame = love.graphics.newQuad(u, v
+                                      , sprite.frame_width, sprite.frame_height
+                                      , sprite.sprite_atlas:getWidth()
+                                      , sprite.sprite_atlas:getHeight())
+
+  local scale_x = scale
+  if mirror_x then
+    scale_x = -scale
+    x = x + sprite.frame_width
+  end
+  local transform = love.math.newTransform(x, y, 0, scale_x, scale)
+  love.graphics.draw(sprite.sprite_atlas, frame, transform)
+
 end
 
 function nesdraw.draw_sprite(sprite, x, y, scale)
@@ -131,7 +137,7 @@ function nesdraw.draw_sprite(sprite, x, y, scale)
 
     assert(sprite.sprite_atlas, "Sprite has no atlas");
 
-    draw_sprite_frame(sprite, x, y, frame_u, frame_v, scale)
+    draw_sprite_frame(sprite, x, y, frame_u, frame_v, scale, active_animation.mirror_x)
     -- Debugging frame
     -- love.graphics.print("" .. frame_number, x + 8, y)
   end

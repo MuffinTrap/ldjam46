@@ -258,17 +258,18 @@ end
 
 local function get_selected_tile(mx, my, gridX, gridY, gridWidth, gridHeight
                                  , tile_size
-                                 , tile_dimensions)
+                                 , tile_dimensions
+                                 , dimAdjust)
   if (mx > gridX and mx < gridX + gridWidth and
       my > gridY and my < gridY + gridHeight) then
 
-    local mtx = ((mx - gridX) / gridWidth) * tile_dimensions.w
-    local mty = ((my  - gridY ) / gridHeight) * tile_dimensions.h
+    local mtx = ((mx - gridX) / gridWidth) * tile_dimensions.w / dimAdjust
+    local mty = ((my  - gridY ) / gridHeight) * tile_dimensions.h / dimAdjust
     mtx = math.floor(mtx)
     mty = math.floor(mty)
 
-    return {gridX + mtx * tile_size.w, gridY + mty * tile_size.h}, {mtx, mty}
-    else
+    return {gridX + mtx * tile_size.w, gridY + mty * tile_size.h}, {mtx * dimAdjust, mty * dimAdjust}
+  else
     return nil
   end
 end
@@ -344,7 +345,7 @@ function neseditor.update(data)
 
 end
 
-function neseditor.draw(data, font_height)
+function neseditor.draw(data, font_height, grid_snap_size)
   love.graphics.setColor(1,1,1)
   local guide_x = 10 * gui_scale
   love.graphics.print("Editor!", guide_x, 0)
@@ -368,7 +369,7 @@ function neseditor.draw(data, font_height)
   local room_size = get_room_pixel_size(room_scale)
   local world_size = get_world_pixel_size(world_scale)
 
-  local room_tile_size = {w = TILE_SIZE * room_scale, h = TILE_SIZE * room_scale}
+  local room_tile_size = {w = grid_snap_size * room_scale, h = grid_snap_size * room_scale}
   local world_tile_size = get_world_tile_size(world_scale)
 
   local world_pos = {x = editor_x, y = editor_y}
@@ -438,7 +439,10 @@ function neseditor.draw(data, font_height)
 
     -- Edit Room
 
-    local st, mt = get_selected_tile(mx, my, room_pos.x, room_pos.y, room_size.w, room_size.h, room_tile_size, ROOM_SIZE)
+    local dimAdjust = grid_snap_size / TILE_SIZE
+    local st, mt = get_selected_tile(mx, my, room_pos.x, room_pos.y,
+                                     room_size.w, room_size.h, room_tile_size,
+                                     ROOM_SIZE, dimAdjust)
     if st then
       local room = data.rooms[neseditor.selected_room]
       local grid = room.bg
@@ -459,7 +463,7 @@ function neseditor.draw(data, font_height)
         grid = room.triggers
       end
 
-      -- Draw borders of room
+      -- Draw borders around held tile
       love.graphics.rectangle("line", st[1]-1, st[2]-1, room_tile_size.w + 2, room_tile_size.h + 2)
 
       -- Draw guides for 16x16 tiles
@@ -512,7 +516,7 @@ function neseditor.draw(data, font_height)
     st, mt = get_selected_tile(mx, my
                                , world_pos.x, world_pos.y
                                , world_size.w, world_size.h
-                               , world_tile_size, WORLD_SIZE)
+                               , world_tile_size, WORLD_SIZE, 1)
 
     if st then
       -- Draw selected room

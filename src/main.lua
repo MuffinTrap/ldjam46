@@ -292,7 +292,7 @@ function love.draw()
   if state == GameState then
     draw_game()
   elseif state == EditorState then
-    editor.draw(data, font_height)
+    editor.draw(data, font_height, 16)
   end
 end
 
@@ -308,8 +308,10 @@ function draw_game()
   local sprite = get_player_sprite(data)
   if sprite then
     local scale = 1
-    local player_pos = walkstate.get_player_pos()
-    drawing.draw_sprite(sprite, player_pos.x, player_pos.y, scale)
+    if data.state_stack[data.state_index].get_player_pos then
+      local player_pos = data.state_stack[data.state_index].get_player_pos()
+      drawing.draw_sprite(sprite, player_pos.x, player_pos.y, scale)
+    end
   end
 
   assert(data.state_stack[data.state_index], "Nil at stack")
