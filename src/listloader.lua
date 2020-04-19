@@ -149,9 +149,13 @@ local function load_sprite(filename)
         local animation = {
           name = animation_name,
           first_frame = first,
-          frame_amount = amount,
+          frame_amount = math.abs(amount),
           frame_times = times,
+          mirror_x = false,
         }
+        if (amount < 0) then
+          animation.mirror_x = true
+        end
         sprite.animations[#sprite.animations + 1] = animation
         -- First animation becomes the initial active animation
         if line_number == 2 then

@@ -1,2 +1,4 @@
 player.png 16 16 
 idle 0 4 0.2
+walk_right 4 4 0.2
+walk_left 4 -4 0.2
