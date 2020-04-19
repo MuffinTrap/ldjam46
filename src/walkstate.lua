@@ -116,8 +116,14 @@ end
 function walkstate.update(data, input)
   local walk_result = update_walk(data, input)
 
+  local player = get_player_sprite(data)
+  if not player then
+    return false
+  end
+
   if walk_result == start_fall then
     print ("Walk -> Fall")
+    drawing.set_animation(player, "fall")
     local fall = falling_state
     fall.init(walkstate.player_x, walkstate.player_y)
     push_state(data, fall)
@@ -126,6 +132,7 @@ function walkstate.update(data, input)
 
   if walk_result == start_climb then
     print ("Walk -> Climb")
+    drawing.set_animation(player, "climb")
     local climb = climbing_state
     climb.init(walkstate.player_x, walkstate.player_y)
     push_state(data, climb)
