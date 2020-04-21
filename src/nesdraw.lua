@@ -38,8 +38,11 @@ function nesdraw.draw_room(data, room_index, x, y, scale)
 
   local tileSize = TILE_SIZE * scale
   -- Room bg
-  love.graphics.setColor(0,0,0)
+  if room.bg_color then
+  love.graphics.setColor(room.bg_color)
   love.graphics.rectangle("fill", x, y, ROOM_SIZE.w * tileSize, ROOM_SIZE.h * tileSize)
+  end
+
   -- Draw bg
   love.graphics.setColor(1,1,1)
 
@@ -62,21 +65,29 @@ function nesdraw.draw_world(data, world_index, x, y, scale)
   local world_size_scaled = get_world_pixel_size(scale)
   local world_size = get_world_pixel_size(1)
   local world_tile_size = get_world_tile_size(scale)
+  local world_tile_size_pixel = get_world_tile_size(1)
   -- World bg
   love.graphics.setColor(0,0,0)
   love.graphics.rectangle("fill", x, y, world_size_scaled.w, world_size_scaled.h)
 
-  local roomscale = world_tile_size.h / world_size_scaled.h
+  -- Calculating the room scale.
+  -- The roomscale tells how much to scale a 8x8 tile
+  local room_pixel_size = get_room_pixel_size(1)
+  local height_in_tiles = world_size.h / TILE_SIZE
+  local scaled_tile_height = world_size_scaled.h / height_in_tiles
+  local roomscale = scaled_tile_height * scale
 
   love.graphics.setColor(1,1,1)
+
+  local bracket = 0.25
 
   for i, item in ipairs(world.rooms) do
     local room_x = x + item.x * world_tile_size.w
     local room_y = y + item.y * world_tile_size.h
-    nesdraw.draw_room(data, item.index, room_x, room_y, roomscale * 2)
-    love.graphics.rectangle("line", room_x, room_y, world_tile_size.w, world_tile_size.h)
+    nesdraw.draw_room(data, item.index, room_x, room_y, roomscale)
+    love.graphics.line(room_x, room_y, room_x + world_tile_size.w * bracket, room_y)
+    love.graphics.line(room_x, room_y, room_x, room_y + world_tile_size.h * bracket)
     love.graphics.print("" .. item.index, room_x + world_tile_size.w * 0.5, room_y)
-
   end
 end
 

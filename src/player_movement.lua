@@ -9,6 +9,7 @@ local player_movement = {}
 firstFloorId = 9
 firstLadderId = 4
 lastLadderId = 6
+goldEmptyId = 8
 goldId = 7
 
 function player_movement.accelerate(speed, acc, max)
@@ -92,6 +93,8 @@ function player_movement.test_center_room_fg(data, bounds, start_index, end_inde
     x = bounds.x,
     y = bounds.y,
     hit_index = 0,
+    hit_sprite = nil,
+    collision = false,
   }
 
   local grid_size = 16 -- Should really be sprite's frame width and height
@@ -110,12 +113,13 @@ function player_movement.test_center_room_fg(data, bounds, start_index, end_inde
           update_result.x = update_result.x + center_result.x
           update_result.y = update_result.y + center_result.y
           update_result.hit_index = sprite.index
+          update_result.hit_sprite = sprite
+          update_result.collision = true
           return update_result
       end
     end
   end
   return update_result
-
 end
 
 function player_movement.test_collision_room_fg(data, bounds, start_index, end_index)
