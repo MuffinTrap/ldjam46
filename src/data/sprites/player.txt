@@ -2,3 +2,5 @@ player.png 16 16
 idle 0 4 0.2
 walk_right 4 4 0.2
 walk_left 4 -4 0.2
+climb 8 4 0.2
+fall 12 2 0.15

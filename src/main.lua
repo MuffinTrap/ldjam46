@@ -102,6 +102,7 @@ function create_room()
     bg = {},
     fg = {},
     triggers = {},
+    bg_color = {0,0,0},
   }
   return room
 end
@@ -206,6 +207,8 @@ function love.load()
 
   editor_font = love.graphics.newFont("data/Born2bSportyV2.ttf", font_height)
   editor_font:setFilter("nearest", "nearest", 0)
+
+  editor.load()
 
   love.graphics.setFont(game_font)
 

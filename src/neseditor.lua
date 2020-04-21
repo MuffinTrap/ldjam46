@@ -18,6 +18,9 @@ local LayerBg = 1
 local LayerFg = 2
 local LayerTrigger = 3
 
+local palette_imageData = nil
+local palette_image = nil
+
 local neseditor = {
   selected_image = 1,
   selected_sprite = 1,
@@ -36,6 +39,8 @@ local neseditor = {
 }
 
 function neseditor.load()
+  palette_imageData = love.image.newImageData("data/palette.png")
+  palette_image = love.graphics.newImage(palette_imageData)
 end
 
 function neseditor.mb1click()
@@ -54,7 +59,6 @@ function neseditor.mousepressed(x, y, button)
   if button == 1 then
     neseditor.m1_dragging = true
   end
-
 end
 
 function neseditor.mousereleased(x, y, button)
@@ -392,7 +396,8 @@ function neseditor.draw(data, font_height, grid_snap_size)
 
     -- Draw world
 
-    love.graphics.print("World " .. neseditor.selected_world .. " : " .. data.worlds[neseditor.selected_world].name
+    love.graphics.print("World " .. neseditor.selected_world ..
+                          " : " .. data.worlds[neseditor.selected_world].name
                         , world_pos.x, world_pos.y - font_height)
 
     drawing.draw_world(data, neseditor.selected_world, world_pos.x, world_pos.y, world_scale)
@@ -415,7 +420,6 @@ function neseditor.draw(data, font_height, grid_snap_size)
     love.graphics.print("Room " .. neseditor.selected_room .. " : " .. data.rooms[neseditor.selected_room].name
                         , room_pos.x, room_pos.y - font_height)
 
-
     drawing.draw_room(data, neseditor.selected_room, room_pos.x, room_pos.y, editor_scale)
 
     -- Layer selection
@@ -428,6 +432,35 @@ function neseditor.draw(data, font_height, grid_snap_size)
     end
     love.graphics.print("Layer :" .. layer, room_pos.x, room_pos.y + room_size.h)
 
+    -- Select background color from palette
+    local palette_x = room_pos.x
+    local palette_y = room_pos.y + room_size.h + 40 * editor_scale
+    local ppw = palette_imageData:getWidth()
+    local pph = palette_imageData:getHeight()
+    local palette_w = room_size.w
+    local palette_h = pph * editor_scale
+    local palette_scale = palette_w / ppw
+    love.graphics.draw(palette_image, room_pos.x, palette_y, 0, palette_scale, palette_scale)
+
+    if mx > palette_x and mx < palette_x + palette_w and
+    my > palette_y and my < palette_y + palette_h then
+      love.graphics.rectangle("line", palette_x, palette_y
+                              , palette_w, palette_h)
+
+      local mipx = ((mx - palette_x) / palette_w) * ppw
+      local mipy = (my - palette_y) * palette_scale
+
+      if neseditor.mb1click() and
+        mipx > 0 and mipx < ppw and
+        mipy > 0 and mipy < pph then
+
+        local br, bg, bb, ba = palette_imageData:getPixel(mipx, mipy)
+        if data.rooms[neseditor.selected_room].bg_color == nil then
+          data.rooms[neseditor.selected_room].bg_color = {0,0,0}
+        end
+        data.rooms[neseditor.selected_room].bg_color = {br, bg, bb}
+      end
+    end
 
     -- Images or sprites
 

@@ -7,6 +7,7 @@ local drawing = require "nesdraw"
 local movement = require "player_movement"
 local falling_state = require "falling"
 local climbing_state = require "climbstate"
+local gold = require "goldstatus"
 
 local walkstate = {
   player_max_speed = 1,
@@ -100,6 +101,13 @@ local function update_walk(data, input)
     walkstate.player_y = change_result.y
   end
 
+  -- Check if center collides with gold
+  local gold_status = movement.test_center_room_fg(data, bounds, goldId, goldId)
+  if gold_status.collision then
+    print("hit gold")
+    gold.collect(gold_status.hit_sprite)
+  end
+
   return continue_walk
 end
 
@@ -116,8 +124,14 @@ end
 function walkstate.update(data, input)
   local walk_result = update_walk(data, input)
 
+  local player = get_player_sprite(data)
+  if not player then
+    return false
+  end
+
   if walk_result == start_fall then
     print ("Walk -> Fall")
+    drawing.set_animation(player, "fall")
     local fall = falling_state
     fall.init(walkstate.player_x, walkstate.player_y)
     push_state(data, fall)
@@ -126,6 +140,7 @@ function walkstate.update(data, input)
 
   if walk_result == start_climb then
     print ("Walk -> Climb")
+    drawing.set_animation(player, "climb")
     local climb = climbing_state
     climb.init(walkstate.player_x, walkstate.player_y)
     push_state(data, climb)

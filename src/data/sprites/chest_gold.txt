@@ -1,1 +1,2 @@
 tile_chest_gold.png 16 16
+idle 0 4 0.35
